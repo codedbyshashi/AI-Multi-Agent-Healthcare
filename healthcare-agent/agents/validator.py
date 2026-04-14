@@ -2,28 +2,35 @@ REQUIRED_SECTIONS = ["Summary", "Key Findings", "Risk Level", "Recommendations"]
 MIN_OUTPUT_LENGTH = 100
 
 
-def validate_output(output: str) -> bool:
-    """
-    Validates that the Executor's output is structured, complete, and meaningful.
-    Returns True if valid, False if invalid (retry needed).
-    """
+def validate_output(output: str, tool: str) -> bool:
     print("[Validator] Validating output...")
 
-    # Rule 1: Output must not be empty or None
-    if not output or not output.strip():
-        print("[Validator] Output invalid — retry needed")
+    if not output or len(output.strip()) < 50:
+        print("[Validator] Output invalid — too short")
         return False
 
-    # Rule 2: Output must meet minimum length
-    if len(output.strip()) < MIN_OUTPUT_LENGTH:
-        print("[Validator] Output invalid — retry needed")
-        return False
+    if tool == "medical_analysis":
+        required_sections = [
+            "Summary",
+            "Key Findings",
+            "Risk Level",
+            "Recommendations"
+        ]
 
-    # Rule 3: All required sections must be present
-    for section in REQUIRED_SECTIONS:
-        if section not in output:
-            print(f"[Validator] Missing section: {section}")
-            print("[Validator] Output invalid — retry needed")
+        for section in required_sections:
+            if section not in output:
+                print(f"[Validator] Missing section: {section}")
+                return False
+
+    elif tool == "general_summary":
+        # Just ensure it's meaningful text
+        if len(output.split()) < 10:
+            print("[Validator] Summary too short")
+            return False
+
+    elif tool == "irrelevant_content":
+        if "Irrelevant content" not in output:
+            print("[Validator] Incorrect irrelevant response")
             return False
 
     print("[Validator] Output valid")

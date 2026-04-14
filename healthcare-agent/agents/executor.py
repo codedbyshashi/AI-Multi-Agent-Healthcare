@@ -1,58 +1,92 @@
-from groq import Groq
 import os
+import time
+from groq import Groq
 from dotenv import load_dotenv
+from utils.text_reducer import reduce_text
 
 load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-MAX_INPUT_CHARS = 4000
+MAX_INPUT_CHARS = 2000
 
-EXECUTOR_PROMPT = """
-You are a medical analysis assistant.
 
-Analyze the given patient report and produce the following structured output:
+MEDICAL_PROMPT = """
+Analyze the patient report. Output MUST contain these exact sections:
 
 Summary:
-Provide a concise summary of the patient condition.
+Brief patient condition overview.
 
 Key Findings:
-- List important clinical observations
+- List clinical observations
 
 Risk Level:
-Provide level (Low / Medium / High) AND justification in the SAME line
+Low/Medium/High with justification.
 
 Recommendations:
-- List actionable next steps
+- Actionable next steps
 
-Instructions:
-- STRICTLY follow the format (use exact section headers)
-- Do NOT use markdown like ** or ##
-- Keep output clean and readable
-- Ensure medical reasoning is logical
+No markdown. No extra text.
 
-Patient Report:
+Report:
 {input_text}
 """
 
-def execute_workflow(text: str) -> str:
-    print("[Executor] Processing report...")
+SUMMARY_PROMPT = """
+Summarize the following text concisely.
 
-    try:
-        if len(text) > MAX_INPUT_CHARS:
-            print("[Executor] Input truncated due to size limit")
-            text = text[:MAX_INPUT_CHARS]
+Text:
+{input_text}
+"""
 
-        prompt = EXECUTOR_PROMPT.format(input_text=text)
 
-        response = client.chat.completions.create(
-    model="llama-3.1-8b-instant",
-    messages=[{"role": "user", "content": prompt}],
-    temperature=0.3,
-)
+#  Helper to build prompt
+def build_prompt(text, tool):
+    if tool == "medical_analysis":
+        return MEDICAL_PROMPT.format(input_text=text)
+    elif tool == "general_summary":
+        return SUMMARY_PROMPT.format(input_text=text)
+    else:
+        return None
 
-        return response.choices[0].message.content.strip()
 
-    except Exception as e:
-        print("[Executor] Error:", str(e))
-        return "Error generating analysis"
+#  Retry logic
+def call_llm_with_retry(text, tool):
+    for attempt in range(2):
+        try:
+            prompt = build_prompt(text, tool)
+
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
+
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[Executor] Attempt {attempt+1} failed:", error_msg)
+
+            if "413" in error_msg or "tokens" in error_msg or "Payload Too Large" in error_msg:
+                print("[Executor] Reducing input size...")
+                text = text[:1500]
+
+            time.sleep(2)
+
+    return "Execution failed after retry due to API/token limit."
+
+
+#  MAIN FUNCTION
+def execute_workflow(text: str, tool: str) -> str:
+    print(f"[Executor] Using tool: {tool}")
+
+    if tool == "irrelevant_content":
+        return "Irrelevant content detected — no meaningful analysis possible."
+
+    # Reduce big input using chunk+summarize pipeline
+    if len(text) > MAX_INPUT_CHARS:
+        text = reduce_text(text)
+
+    # Call with retry
+    return call_llm_with_retry(text, tool)
