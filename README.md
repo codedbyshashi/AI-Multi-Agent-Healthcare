@@ -17,10 +17,14 @@
 
 ## 📸 Screenshots
 
+### 🖥️ Dashboard
+![Dashboard UI - Upload and real-time monitoring](frontend/pics/Dashboard.png)
 
-![Dashboard](frontend/pics/Dashboard.png)
-![Analysis](frontend/pics/analysis.png)
-![Pipeline](frontend/pics/pipeline.png)
+### 📊 Analysis Results
+![Structured clinical output with summary, findings, and recommendations](frontend/pics/analysis.png)
+
+### ⚡ Real-time Pipeline
+![Live multi-agent execution pipeline with streaming updates](frontend/pics/pipeline.png)
 
 ## ⚡ Key Features
 
