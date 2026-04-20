@@ -9,10 +9,9 @@
 **[Visit Application →](https://multi-agent-healthcare-two.vercel.app)**
 
 ---
-
 ## 🎥 Demo Video
 
-<video src="pics/demo.mp4" controls width="600"></video>
+[![Watch Demo](frontend/medisync-react/pics/Dashboard.png)](https://drive.google.com/file/d/1yAqG8XUlFk-jQ0gCfFjPgbVci6BRdyXy/view?usp=drivesdk)
 
 ---
 
@@ -20,11 +19,9 @@
 
 | Dashboard | Analysis Results | Real-time Pipeline |
 |-----------|----------------|--------------------|
-| ![Dashboard](pics/Dashboard.png) | ![Analysis](pics/analysis.png) | ![Pipeline](pics/pipeline.png) |
+| ![Dashboard](frontend/medisync-react/pics/Dashboard.png) | ![Analysis](frontend/medisync-react/pics/analysis.png) | ![Pipeline](frontend/medisync-react/pics/pipeline.png) |
 
 | Upload & Real-time monitoring | Structured clinical output | Live agent updates |
-
----
 
 ## ⚡ Key Features
 
