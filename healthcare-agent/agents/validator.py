@@ -1,37 +1,41 @@
-REQUIRED_SECTIONS = ["Summary", "Key Findings", "Risk Level", "Recommendations"]
-MIN_OUTPUT_LENGTH = 100
-
-
-def validate_output(output: str, tool: str) -> bool:
+def validate_output(output: dict, tool: str) -> dict:
     print("[Validator] Validating output...")
 
-    if not output or len(output.strip()) < 50:
-        print("[Validator] Output invalid — too short")
-        return False
+    analysis = output.get("analysis") if isinstance(output, dict) else None
+    status = output.get("status") if isinstance(output, dict) else None
+
+    valid = (
+        analysis is not None
+        and status != "failed"
+        and "Summary" in analysis
+    )
 
     if tool == "medical_analysis":
         required_sections = [
             "Summary",
             "Key Findings",
             "Risk Level",
-            "Recommendations"
+            "Recommendations",
         ]
+        valid = valid and all(section in analysis for section in required_sections)
 
-        for section in required_sections:
-            if section not in output:
-                print(f"[Validator] Missing section: {section}")
-                return False
+    if tool == "general_summary":
+        valid = valid and len(analysis.split()) >= 10
 
-    elif tool == "general_summary":
-        # Just ensure it's meaningful text
-        if len(output.split()) < 10:
-            print("[Validator] Summary too short")
-            return False
+    if tool == "irrelevant_content":
+        valid = analysis is not None and "Irrelevant content" in analysis
 
-    elif tool == "irrelevant_content":
-        if "Irrelevant content" not in output:
-            print("[Validator] Incorrect irrelevant response")
-            return False
+    if not valid:
+        print("[Validator] Output invalid")
+        return {
+            "valid": False,
+            "status": "failed",
+            "message": "Validation failed due to incomplete or missing analysis",
+        }
 
     print("[Validator] Output valid")
-    return True
+    return {
+        "valid": True,
+        "status": "success",
+        "message": "Validation completed successfully",
+    }

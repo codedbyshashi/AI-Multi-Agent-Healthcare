@@ -3,6 +3,7 @@ import shutil
 import logging
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from utils.pdf_reader import extract_text_from_pdf
 from utils.text_cleaner import clean_text
@@ -17,6 +18,14 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Multi-Agent Healthcare Workflow Assistant")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 def health_check():
@@ -28,55 +37,67 @@ async def analyze_report(file: UploadFile = File(...)):
     temp_path = f"temp_{file.filename}"
     ctx = ContextAgent()
 
+    pipeline_status = {
+        "tool": "pending",
+        "planner": "pending",
+        "executor": "pending",
+        "validator": "pending",
+    }
+
     try:
-        # Step 1: Save file
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         print(f"[System] File saved: {temp_path}")
 
-        # Step 2: Extract text
         print("[System] Extracting text...")
         text = extract_text_from_pdf(temp_path)
-
-        # Step 3: Clean corrupted PDF text
         text = clean_text(text)
-
-        # Step 4: Trim to prevent token overflow
-        print("[System] Trimming input...")
-        text = text[:1500]
-
+        text = text[:3000]
         ctx.store("raw_text", text)
 
-        # Step 5: Tool Agent (MCP decision)
+        print("[Pipeline] -> Starting ToolAgent...")
         tool = decide_tool(ctx.get("raw_text"))
+        pipeline_status["tool"] = "success"
+        print(f"[Pipeline] ToolAgent completed -> tool = '{tool}'")
         ctx.store("tool", tool)
 
-        # Step 6: Planner (reads text + tool from context)
-        plan = plan_workflow(ctx.get("raw_text"), ctx.get("tool"))
-        ctx.store("plan", plan)
+        print("[Pipeline] -> Starting Planner...")
+        plan_result = plan_workflow(ctx.get("raw_text"), ctx.get("tool"))
+        pipeline_status["planner"] = plan_result["status"]
+        ctx.store("plan", plan_result)
 
-        # Step 7: Executor (reads text + tool from context)
-        result = execute_workflow(ctx.get("raw_text"), ctx.get("tool"))
-        ctx.store("result", result)
+        print("[Pipeline] -> Starting Executor...")
+        executor_result = execute_workflow(ctx.get("raw_text"), ctx.get("tool"))
+        pipeline_status["executor"] = executor_result["status"]
+        ctx.store("result", executor_result)
 
-        # Step 8: Validator (reads result + tool from context)
-        if not validate_output(ctx.get("result"), ctx.get("tool")):
-            print("[Validator] Retry triggered...")
-            result = execute_workflow(ctx.get("raw_text"), ctx.get("tool"))
-            ctx.store("result", result)
+        print("[Pipeline] -> Starting Validator...")
+        validation_result = validate_output(ctx.get("result"), ctx.get("tool"))
+        pipeline_status["validator"] = validation_result["status"]
+        ctx.store("validation", validation_result)
 
-        # Step 7: Fallback if still failed
-        result = ctx.get("result")
-        if "failed" in result.lower():
-            print("[System] Applying fallback response")
-            result = "Analysis could not be generated due to system limitations. Please retry."
+        analysis = executor_result.get("analysis")
+        if executor_result.get("status") != "success":
+            analysis = None
 
-        print("[System] Done")
-        return JSONResponse(content={
-            "workflow_plan": ctx.get("plan"),
+        response_payload = {
             "selected_tool": ctx.get("tool"),
-            "analysis": result
-        })
+            "workflow_plan": plan_result.get("workflow_plan"),
+            "analysis": analysis,
+            "validation": validation_result,
+            "pipeline_status": pipeline_status,
+        }
+
+        if plan_result.get("error"):
+            response_payload["planner_error"] = plan_result["error"]
+            response_payload["planner_message"] = plan_result.get("message")
+
+        if executor_result.get("error"):
+            response_payload["error"] = executor_result["error"]
+            response_payload["message"] = executor_result.get("message")
+
+        print("[System] Pipeline completed")
+        return JSONResponse(content=response_payload)
 
     except Exception as e:
         logger.error(f"[System] Error: {e}")

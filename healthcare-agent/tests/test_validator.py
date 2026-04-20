@@ -19,7 +19,7 @@ Recommendations:
 invalid_output = "This is incomplete output"
 
 print("\n--- VALID OUTPUT TEST ---")
-print(validate_output(valid_output))   # Expected: True
+print(validate_output(valid_output, tool="medical_analysis"))   # Expected: True
 
 print("\n--- INVALID OUTPUT TEST ---")
-print(validate_output(invalid_output)) # Expected: False
+print(validate_output(invalid_output, tool="medical_analysis")) # Expected: False

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "AI Multi-Agent Healthcare",
+			"path": "../.."
+		},
+		{
+			"name": "stitch_healthgraph_multi_agent_dashboard",
+			"path": "../../../../../../Downloads/stitch_healthgraph_multi_agent_dashboard/stitch_healthgraph_multi_agent_dashboard"
+		}
+	],
+	"settings": {}
+}

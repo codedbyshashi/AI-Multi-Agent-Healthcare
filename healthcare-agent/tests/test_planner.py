@@ -7,7 +7,7 @@ Blood Pressure: 150/95
 Complaints: Headache, dizziness
 """
 
-plan = plan_workflow(sample_text)
+plan = plan_workflow(sample_text, tool="medical_analysis")
 
 print("\n--- PLANNER OUTPUT ---\n")
 print(plan)

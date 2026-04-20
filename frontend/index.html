@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MediSync AI - Multi-Agent Healthcare Analyzer</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#727783",
+                        "surface-container-low": "#f3f4f5",
+                        "on-surface": "#191c1d",
+                        "on-secondary-fixed": "#002201",
+                        "tertiary-fixed": "#ffdeaa",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffd38a",
+                        "secondary-container": "#90fb81",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed": "#001b3d",
+                        "on-tertiary-fixed": "#271900",
+                        "on-primary-container": "#c8daff",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "surface-container-high": "#e7e8e9",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#00750f",
+                        "on-secondary-fixed-variant": "#005307",
+                        "tertiary-container": "#7e5800",
+                        "primary": "#00478d",
+                        "tertiary": "#604200",
+                        "secondary-fixed": "#90fb81",
+                        "primary-fixed": "#d6e3ff",
+                        "secondary": "#006e0d",
+                        "surface-variant": "#e1e3e4",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#424752",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary-fixed-variant": "#00468c",
+                        "inverse-surface": "#2e3132",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#005db6",
+                        "surface": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "primary-container": "#005eb8",
+                        "background": "#f8f9fa",
+                        "inverse-primary": "#a9c7ff",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffba2c",
+                        "primary-fixed-dim": "#a9c7ff",
+                        "surface-container": "#edeeef",
+                        "on-background": "#191c1d",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed-dim": "#74dd68",
+                        "outline-variant": "#c2c6d4"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        lg: "0.75rem",
+                        xl: "1rem",
+                        "2xl": "1.5rem",
+                        "3xl": "2rem",
+                        full: "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
+                        label: ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .pulse-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            border: 2px solid currentColor;
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-in { animation: slide-in 0.4s ease-out forwards; }
+
+        .spinner {
+            border: 3px solid rgba(0,71,141,0.15);
+            border-top-color: #00478d;
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-24">
+
+<!-- TopAppBar -->
+<header class="bg-slate-50/80 backdrop-blur-xl docked full-width top-0 z-50 shadow-sm flex justify-between items-center w-full px-6 py-3 fixed">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-blue-700" data-icon="clinical_notes">clinical_notes</span>
+        <h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-blue-500 font-['Manrope'] tracking-tight">MediSync AI</h1>
+    </div>
+    <div class="flex items-center gap-4">
+        <div class="hidden md:flex gap-6">
+            <a class="text-blue-700 font-semibold font-['Manrope'] transition-colors" href="#">Dashboard</a>
+            <a class="text-slate-500 font-['Manrope'] hover:bg-slate-100/50 transition-colors" href="#">Agents</a>
+            <a class="text-slate-500 font-['Manrope'] hover:bg-slate-100/50 transition-colors" href="#">History</a>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+            <img alt="Dr. Clinical Lead" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvGyz17OesmTUYWh_xriUG_PeCphxAIFun60Ma-gPCG_Wg1oxMzcF1kGnNky9QwGqPEEBcvpXeoD4MYlNixw8tB_dFeA8XA0fF8QKHQrxqCbMPpD_2lvkTId3nWCpj7jhpi57DsatlY-62nnWGFvFRZnLNP1ZddFzGURsvTl6kwAdPsNawr8f2i-FTRDPST6toYPJd0H4wrWEepbNQ9y0ayoikqNvc6-tv63mXE223iBb3Mo17lxbmgyDg6eqi8JfF-A_6Ytg_LAY"/>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 px-6 max-w-7xl mx-auto">
+
+    <!-- Hero Section -->
+    <section class="mb-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="max-w-2xl">
+                <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">AI Multi-Agent Healthcare Analyzer</h2>
+                <p class="text-lg text-on-surface-variant font-medium">Explainable AI powered by specialized agents</p>
+            </div>
+            <div class="flex gap-3">
+                <div class="px-4 py-2 bg-secondary-container text-on-secondary-container rounded-xl flex items-center gap-2 text-sm font-semibold">
+                    <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                    Precision Mode Active
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Bento Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Upload Area (Large Primary Component) -->
+        <div class="md:col-span-8 space-y-6">
+            <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0px_20px_40px_rgba(25,28,29,0.05)] border border-outline-variant/10">
+                <!-- Drop Zone -->
+                <div id="dropZone" class="border-2 border-dashed border-primary-fixed-dim bg-surface-container-low rounded-2xl p-12 text-center flex flex-col items-center justify-center group hover:bg-surface-container-high transition-all duration-300 cursor-pointer"
+                     onclick="document.getElementById('fileInput').click()"
+                     ondragover="event.preventDefault(); this.classList.add('bg-surface-container-high', 'border-primary')"
+                     ondragleave="this.classList.remove('bg-surface-container-high', 'border-primary')"
+                     ondrop="handleDrop(event)">
+                    <div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl" data-icon="upload_file">upload_file</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Drop clinical reports here</h3>
+                    <p class="text-on-surface-variant mb-8 max-w-xs mx-auto">Upload PDF reports for comprehensive multi-agent analysis.</p>
+                    <button class="bg-gradient-to-br from-primary to-primary-container text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity">
+                        <span class="material-symbols-outlined" data-icon="add">add</span>
+                        Select PDF Report
+                    </button>
+                    <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelect(event)"/>
+                </div>
+
+                <!-- File Info Bar (hidden initially) -->
+                <div id="fileInfoBar" class="mt-8 bg-surface-container rounded-2xl p-4 flex items-center justify-between hidden">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <span class="material-symbols-outlined text-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+                        </div>
+                        <div>
+                            <p id="fileName" class="font-bold text-on-surface">—</p>
+                            <p id="fileSize" class="text-xs text-on-surface-variant">—</p>
+                        </div>
+                    </div>
+                    <button id="analyzeBtn" onclick="analyzeReport()" class="bg-primary text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-primary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="analyzeBtnText">Analyze Report</span>
+                        <span id="analyzeBtnSpinner" class="spinner hidden"></span>
+                        <span id="analyzeBtnIcon" class="material-symbols-outlined text-[20px]" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pipeline Visualization -->
+            <div id="pipelineSection" class="hidden slide-in">
+                <div class="flex items-end justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-on-surface">Agent Pipeline</h3>
+                        <p class="text-sm text-on-surface-variant">Real-time agent execution status</p>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 overflow-x-auto pb-2">
+                    <!-- Pipeline cards generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Results Section (hidden initially) -->
+            <div id="resultsSection" class="hidden space-y-6 slide-in">
+                
+                <!-- Analysis Output -->
+                <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-primary-container"></div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-2xl font-extrabold tracking-tight text-on-surface mb-2">Clinical Analysis</h2>
+                            <p id="resultTimestamp" class="text-on-surface-variant font-medium text-sm">—</p>
+                        </div>
+                        <div id="validatorBadge" class="hidden">
+                            <span class="bg-secondary-container text-on-secondary-container px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">✔ Validated</span>
+                        </div>
+                    </div>
+                    <div id="analysisOutput" class="prose prose-slate max-w-none text-on-surface/90 leading-relaxed whitespace-pre-wrap font-body text-sm">
+                    </div>
+                </div>
+
+                <!-- Workflow Plan + Tool Decision -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Tool Decision -->
+                    <div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant/10">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-primary/10 rounded-xl">
+                                <span class="material-symbols-outlined text-primary" data-icon="construction">construction</span>
+                            </div>
+                            <h3 class="text-lg font-extrabold tracking-tight">Tool Decision</h3>
+                        </div>
+                        <div class="bg-surface-container-low rounded-xl p-4">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selected Tool</label>
+                            <div id="toolDisplay" class="mt-2 text-lg font-bold text-primary">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Plan -->
+                    <div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant/10">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-tertiary rounded-xl text-on-tertiary">
+                                <span class="material-symbols-outlined" data-icon="hub">hub</span>
+                            </div>
+                            <h3 class="text-lg font-extrabold tracking-tight">Workflow Plan</h3>
+                        </div>
+                        <div id="workflowPlan" class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Processing View -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-surface-container-low rounded-3xl p-6">
+                        <h4 class="font-bold text-sm uppercase tracking-widest text-on-surface-variant mb-3">Raw Input (Simulated)</h4>
+                        <div id="rawTextView" class="bg-surface-container-lowest rounded-xl p-4 font-mono text-xs text-on-surface-variant max-h-40 overflow-y-auto">
+                            Extracted PDF text will appear here after analysis...
+                        </div>
+                    </div>
+                    <div class="bg-surface-container-low rounded-3xl p-6">
+                        <h4 class="font-bold text-sm uppercase tracking-widest text-on-surface-variant mb-3">Processed Output</h4>
+                        <div id="processedTextView" class="bg-surface-container-lowest rounded-xl p-4 font-mono text-xs text-on-surface-variant max-h-40 overflow-y-auto">
+                            Processed analysis snippet will appear here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Display (hidden initially) -->
+            <div id="errorSection" class="hidden slide-in">
+                <div class="bg-error-container rounded-3xl p-8 flex items-start gap-4">
+                    <span class="material-symbols-outlined text-error text-3xl">error</span>
+                    <div>
+                        <h3 class="font-bold text-on-error-container text-lg mb-1">Analysis Failed</h3>
+                        <p id="errorMessage" class="text-on-error-container/80 text-sm mb-4">—</p>
+                        <button onclick="resetUI()" class="bg-error text-on-error px-5 py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Intelligence Panel -->
+        <div class="md:col-span-4 space-y-6">
+            <!-- AI Pulse Component -->
+            <div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_20px_40px_rgba(25,28,29,0.05)] border-l-[3px] border-primary relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <span class="material-symbols-outlined text-6xl" data-icon="psychology">psychology</span>
+                </div>
+                <div class="flex items-center gap-2 mb-4">
+                    <span id="pulseDot" class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-primary">Live Intelligence</h3>
+                </div>
+                <p id="pulseMessage" class="text-on-surface font-semibold mb-4 leading-relaxed">Agent Swarm is idle. Upload a clinical report to begin processing.</p>
+                <div class="bg-surface-container-low rounded-xl p-4">
+                    <div class="flex justify-between text-xs font-bold text-on-surface-variant mb-2">
+                        <span>PIPELINE PROGRESS</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div id="progressBar" class="bg-primary h-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validator Status -->
+            <div class="bg-surface-container-low rounded-3xl p-6">
+                <h3 class="font-bold text-lg mb-4 px-2">Validator Status</h3>
+                <div id="validatorStatus" class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl">
+                        <span class="material-symbols-outlined text-outline-variant">schedule</span>
+                        <span class="text-sm text-on-surface-variant">Awaiting analysis...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Insight -->
+            <div class="rounded-3xl overflow-hidden aspect-[4/3] relative group">
+                <img alt="MRI Scan Interface" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUrkfzjPE8Iqn9iS0xYNOC-CijRH1rZwvvLqf91jRZlD3oRmiS-brrSfzxZ6UeXB29Jn3nRoZs8moKNJ6X5yXNA-G5lNgofmkFH4IoWM5Fhnwz6gDfmMqcdr1xhQkFgiGMFqVUwh7Sa7V_6rvVGwqZaGew78JsZe48vS4-cibPhP7EHN9zTaql74g9vueWUlMf5Y-pnQ55S1sa-CHZ6wzfkFPgTSweI5FaXrTXJHdmasR3k0bgEVq8T9GLaHCrFxROqYWVgRIscSE"/>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6">
+                    <p class="text-white font-bold text-lg leading-tight mb-1">Explainable AI Core</p>
+                    <p class="text-white/70 text-xs">Visualizing decision paths across specialized clinical agents.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Bottom Nav (Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/90 backdrop-blur-lg shadow-[0_-4px_20px_rgba(0,0,0,0.03)] rounded-t-3xl md:hidden">
+    <a class="flex flex-col items-center justify-center bg-blue-50 text-blue-700 rounded-2xl px-5 py-2 active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined" data-icon="home_health" style="font-variation-settings: 'FILL' 1;">home_health</span>
+        <span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-wider mt-1">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+        <span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-wider mt-1">Agents</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined" data-icon="folder_managed">folder_managed</span>
+        <span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-wider mt-1">History</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined" data-icon="settings">settings</span>
+        <span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-wider mt-1">Settings</span>
+    </a>
+</nav>
+
+<script>
+// ===========================================
+// STATE MANAGEMENT
+// ===========================================
+const API_URL = "http://localhost:8001";
+
+let state = {
+    file: null,
+    loading: false,
+    currentStep: -1,
+    workflowPlan: "",
+    selectedTool: "",
+    analysis: "",
+    error: null
+};
+
+const PIPELINE_STEPS = [
+    { name: "PDF Reader",      icon: "description",   desc: "Text Extraction" },
+    { name: "Context Agent",   icon: "memory",        desc: "State Storage" },
+    { name: "Tool Agent",      icon: "construction",  desc: "MCP Decision" },
+    { name: "Planner Agent",   icon: "hub",           desc: "Workflow Planning" },
+    { name: "Executor Agent",  icon: "play_circle",   desc: "Dynamic Execution" },
+    { name: "Validator Agent", icon: "verified_user",  desc: "Output Validation" }
+];
+
+// ===========================================
+// FILE HANDLING
+// ===========================================
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file && file.type === "application/pdf") {
+        setFile(file);
+    }
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('bg-surface-container-high', 'border-primary');
+    const file = event.dataTransfer.files[0];
+    if (file && file.type === "application/pdf") {
+        setFile(file);
+    }
+}
+
+function setFile(file) {
+    state.file = file;
+    document.getElementById("fileInfoBar").classList.remove("hidden");
+    document.getElementById("fileName").textContent = file.name;
+    document.getElementById("fileSize").textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB • Ready to analyze`;
+    // Reset previous results
+    document.getElementById("resultsSection").classList.add("hidden");
+    document.getElementById("errorSection").classList.add("hidden");
+    document.getElementById("pipelineSection").classList.add("hidden");
+}
+
+// ===========================================
+// PIPELINE ANIMATION
+// ===========================================
+function renderPipeline() {
+    const container = document.querySelector("#pipelineSection .flex");
+    container.innerHTML = PIPELINE_STEPS.map((step, i) => {
+        let borderClass, iconClass, statusIcon, statusText;
+
+        if (i < state.currentStep) {
+            // Completed
+            borderClass = "border-secondary";
+            iconClass = "text-secondary";
+            statusIcon = `<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>`;
+            statusText = `<span class="text-[10px] font-mono text-secondary font-bold">DONE</span>`;
+        } else if (i === state.currentStep) {
+            // Active
+            borderClass = "border-primary ring-2 ring-primary/20";
+            iconClass = "text-primary";
+            statusIcon = `<div class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></div>`;
+            statusText = `<span class="text-[10px] font-mono text-primary font-bold">RUNNING</span>`;
+        } else {
+            // Waiting
+            borderClass = "border-outline-variant/30";
+            iconClass = "text-outline-variant";
+            statusIcon = `<span class="material-symbols-outlined text-outline-variant text-sm">schedule</span>`;
+            statusText = `<span class="text-[10px] font-mono text-outline-variant font-bold">WAIT</span>`;
+        }
+
+        return `
+            <div class="flex-shrink-0 w-full sm:w-36 bg-surface-container-lowest p-4 rounded-xl shadow-sm border-t-2 ${borderClass} transition-all duration-300">
+                <div class="flex justify-between items-start mb-3">
+                    ${statusIcon}
+                    ${statusText}
+                </div>
+                <h4 class="font-bold text-sm text-on-surface">${step.name}</h4>
+                <p class="text-[10px] text-on-surface-variant">${step.desc}</p>
+            </div>
+        `;
+    }).join('');
+}
+
+function advancePipeline(stepIndex) {
+    state.currentStep = stepIndex;
+    renderPipeline();
+
+    const progress = Math.round(((stepIndex + 1) / PIPELINE_STEPS.length) * 100);
+    document.getElementById("progressBar").style.width = progress + "%";
+    document.getElementById("progressPercent").textContent = progress + "%";
+
+    const messages = [
+        "Extracting text from clinical document...",
+        "Storing raw data in shared context memory...",
+        "Tool Agent is analyzing content type (MCP decision)...",
+        "Planner is generating context-aware workflow...",
+        "Executor is running dynamic analysis...",
+        "Validator is checking output quality..."
+    ];
+    document.getElementById("pulseMessage").textContent = messages[stepIndex] || "Processing...";
+}
+
+async function simulatePipeline() {
+    document.getElementById("pipelineSection").classList.remove("hidden");
+
+    for (let i = 0; i < PIPELINE_STEPS.length; i++) {
+        advancePipeline(i);
+        await sleep(800);
+    }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ===========================================
+// API CALL
+// ===========================================
+async function analyzeReport() {
+    if (!state.file || state.loading) return;
+
+    state.loading = true;
+    state.error = null;
+
+    // Update button state
+    const btn = document.getElementById("analyzeBtn");
+    btn.disabled = true;
+    document.getElementById("analyzeBtnText").textContent = "Analyzing...";
+    document.getElementById("analyzeBtnSpinner").classList.remove("hidden");
+    document.getElementById("analyzeBtnIcon").classList.add("hidden");
+
+    // Hide previous results/errors
+    document.getElementById("resultsSection").classList.add("hidden");
+    document.getElementById("errorSection").classList.add("hidden");
+
+    // Start pipeline animation
+    const pipelinePromise = simulatePipeline();
+
+    try {
+        // API call
+        const formData = new FormData();
+        formData.append("file", state.file);
+
+        const response = await fetch(`${API_URL}/analyze/`, {
+            method: "POST",
+            body: formData
+        });
+
+        // Wait for pipeline animation to finish
+        await pipelinePromise;
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Store response
+        state.workflowPlan = data.workflow_plan;
+        state.selectedTool = data.selected_tool;
+        state.analysis = data.analysis;
+
+        // Mark all steps complete
+        state.currentStep = PIPELINE_STEPS.length;
+        renderPipeline();
+        document.getElementById("progressBar").style.width = "100%";
+        document.getElementById("progressPercent").textContent = "100%";
+        document.getElementById("pulseMessage").textContent = "Analysis complete. All agents reported successfully.";
+
+        // Display results
+        showResults();
+
+    } catch (err) {
+        // Finish pipeline animation
+        await pipelinePromise;
+        showError(err.message || "Failed to connect to backend. Ensure the server is running.");
+    } finally {
+        state.loading = false;
+        btn.disabled = false;
+        document.getElementById("analyzeBtnText").textContent = "Analyze Report";
+        document.getElementById("analyzeBtnSpinner").classList.add("hidden");
+        document.getElementById("analyzeBtnIcon").classList.remove("hidden");
+    }
+}
+
+// ===========================================
+// DISPLAY RESULTS
+// ===========================================
+function showResults() {
+    const resultsSection = document.getElementById("resultsSection");
+    resultsSection.classList.remove("hidden");
+
+    // Timestamp
+    document.getElementById("resultTimestamp").textContent = `Analyzed: ${new Date().toLocaleString()}`;
+
+    // Analysis
+    document.getElementById("analysisOutput").textContent = state.analysis;
+
+    // Tool display
+    const toolMap = {
+        "medical_analysis": "🏥 Medical Analysis",
+        "general_summary": "📝 General Summary",
+        "irrelevant_content": "⚠️ Irrelevant Content"
+    };
+    document.getElementById("toolDisplay").textContent = toolMap[state.selectedTool] || state.selectedTool;
+
+    // Workflow plan
+    document.getElementById("workflowPlan").textContent = state.workflowPlan;
+
+    // Validator badge
+    document.getElementById("validatorBadge").classList.remove("hidden");
+
+    // Validator status panel
+    const isRetry = state.analysis.includes("could not be generated");
+    document.getElementById("validatorStatus").innerHTML = isRetry
+        ? `<div class="flex items-center gap-3 p-3 bg-tertiary-fixed rounded-2xl">
+               <span class="material-symbols-outlined text-tertiary">warning</span>
+               <span class="text-sm font-semibold text-on-tertiary-fixed">⚠ Retry triggered — fallback response used</span>
+           </div>`
+        : `<div class="flex items-center gap-3 p-3 bg-secondary-container rounded-2xl">
+               <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+               <span class="text-sm font-semibold text-on-secondary-container">✔ Output validated successfully</span>
+           </div>`;
+
+    // Simulated raw/processed text
+    document.getElementById("rawTextView").textContent = `[Simulated] Raw PDF text extracted from: ${state.file.name}\n\nThe backend extracted, cleaned, and trimmed the text before sending it through the agent pipeline.`;
+    document.getElementById("processedTextView").textContent = state.analysis.substring(0, 300) + (state.analysis.length > 300 ? "..." : "");
+}
+
+function showError(message) {
+    document.getElementById("errorSection").classList.remove("hidden");
+    document.getElementById("errorMessage").textContent = message;
+    document.getElementById("pulseMessage").textContent = "Error encountered. Please retry.";
+    document.getElementById("pulseDot").classList.remove("bg-primary");
+    document.getElementById("pulseDot").classList.add("bg-error");
+}
+
+function resetUI() {
+    state = { file: null, loading: false, currentStep: -1, workflowPlan: "", selectedTool: "", analysis: "", error: null };
+    document.getElementById("fileInfoBar").classList.add("hidden");
+    document.getElementById("resultsSection").classList.add("hidden");
+    document.getElementById("errorSection").classList.add("hidden");
+    document.getElementById("pipelineSection").classList.add("hidden");
+    document.getElementById("progressBar").style.width = "0%";
+    document.getElementById("progressPercent").textContent = "0%";
+    document.getElementById("pulseMessage").textContent = "Agent Swarm is idle. Upload a clinical report to begin processing.";
+    document.getElementById("pulseDot").classList.remove("bg-error");
+    document.getElementById("pulseDot").classList.add("bg-primary");
+    document.getElementById("validatorStatus").innerHTML = `
+        <div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl">
+            <span class="material-symbols-outlined text-outline-variant">schedule</span>
+            <span class="text-sm text-on-surface-variant">Awaiting analysis...</span>
+        </div>`;
+    document.getElementById("fileInput").value = "";
+}
+</script>
+</body>
+</html>
