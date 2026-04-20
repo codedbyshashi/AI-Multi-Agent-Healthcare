@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from utils.pdf_reader import extract_text_from_pdf
 from utils.text_cleaner import clean_text
@@ -23,8 +24,23 @@ logger = logging.getLogger(__name__)
 # Thread pool for blocking I/O operations
 executor = ThreadPoolExecutor(max_workers=4)
 
-app = FastAPI(title="AI Multi-Agent Healthcare Workflow Assistant")
+# FastAPI app with explicit docs configuration
+app = FastAPI(
+    title="AI Multi-Agent Healthcare Workflow Assistant",
+    description="Multi-agent healthcare report analysis system",
+    version="1.0.0",
+    docs_url="/docs",           # Explicitly enable Swagger UI
+    redoc_url="/redoc",         # Explicitly enable ReDoc
+    openapi_url="/openapi.json" # Explicitly enable OpenAPI schema
+)
 
+# TrustedHost middleware - add before CORS
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]  # Allow all hosts (needed for Render deployment)
+)
+
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,7 +52,63 @@ app.add_middleware(
 
 @app.get("/")
 def health_check():
-    return {"message": "Healthcare AI API is running"}
+    """Health check endpoint - verifies API is running."""
+    return {
+        "message": "Healthcare AI API is running",
+        "status": "healthy",
+        "version": "1.0.0",
+        "docs_available": True,
+        "endpoints": {
+            "swagger_ui": "/docs",
+            "redoc": "/redoc",
+            "openapi_schema": "/openapi.json",
+            "health": "/health",
+            "ready": "/ready"
+        }
+    }
+
+
+@app.get("/health")
+def health_endpoint():
+    """Detailed health check - used by Render for monitoring."""
+    return {
+        "status": "healthy",
+        "service": "Healthcare AI - Multi-Agent Report Analyzer",
+        "docs_available": True,
+        "redoc_available": True,
+        "api_schema_available": True
+    }
+
+
+@app.get("/ready")
+def readiness_check():
+    """Readiness check - verifies all dependencies are available."""
+    try:
+        from agents.tool_agent import decide_tool
+        from agents.executor import execute_workflow
+        from agents.validator import validate_output
+        from utils.pdf_reader import extract_text_from_pdf
+        
+        return {
+            "ready": True,
+            "dependencies": {
+                "tool_agent": "ok",
+                "executor": "ok",
+                "validator": "ok",
+                "pdf_reader": "ok"
+            }
+        }
+    except Exception as e:
+        return {
+            "ready": False,
+            "error": str(e),
+            "dependencies": {
+                "tool_agent": "error",
+                "executor": "error",
+                "validator": "error",
+                "pdf_reader": "error"
+            }
+        }
 
 
 @app.post("/analyze/")
