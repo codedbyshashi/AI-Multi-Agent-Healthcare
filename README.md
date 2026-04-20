@@ -11,18 +11,16 @@
 ---
 ## 🎥 Demo Video
 
-[![Watch Demo](frontend/medisync-react/pics/Dashboard.png)](https://drive.google.com/file/d/1yAqG8XUlFk-jQ0gCfFjPgbVci6BRdyXy/view?usp=drivesdk)
+[![Watch Demo](frontend/pics/Dashboard.png)](https://drive.google.com/file/d/1yAqG8XUlFk-jQ0gCfFjPgbVci6BRdyXy/view?usp=drivesdk)
 
 ---
 
 ## 📸 Screenshots
 
 
-![Dashboard](frontend/medisync-react/pics/Dashboard.png)
-
-![Analysis](frontend/medisync-react/pics/analysis.png)
-
-![Pipeline](frontend/medisync-react/pics/pipeline.png)
+![Dashboard](frontend/pics/Dashboard.png)
+![Analysis](frontend/pics/analysis.png)
+![Pipeline](frontend/pics/pipeline.png)
 
 ## ⚡ Key Features
 
