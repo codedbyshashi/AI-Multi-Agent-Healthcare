@@ -17,13 +17,12 @@
 
 ## 📸 Screenshots
 
-## 📸 Screenshots
 
-| Dashboard | Analysis Results | Real-time Pipeline |
-|-----------|----------------|--------------------|
-| ![Dashboard](frontend/medisync-react/pics/Dashboard.png) | ![Analysis](frontend/medisync-react/pics/analysis.png) | ![Pipeline](frontend/medisync-react/pics/pipeline.png) |
+![Dashboard](frontend/medisync-react/pics/Dashboard.png)
 
-| Upload & Real-time monitoring | Structured clinical output | Live agent updates |
+![Analysis](frontend/medisync-react/pics/analysis.png)
+
+![Pipeline](frontend/medisync-react/pics/pipeline.png)
 
 ## ⚡ Key Features
 
