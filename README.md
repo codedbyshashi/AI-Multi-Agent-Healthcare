@@ -17,6 +17,8 @@
 
 ## 📸 Screenshots
 
+## 📸 Screenshots
+
 | Dashboard | Analysis Results | Real-time Pipeline |
 |-----------|----------------|--------------------|
 | ![Dashboard](frontend/medisync-react/pics/Dashboard.png) | ![Analysis](frontend/medisync-react/pics/analysis.png) | ![Pipeline](frontend/medisync-react/pics/pipeline.png) |
