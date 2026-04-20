@@ -31,11 +31,24 @@ Risk Level:
 State one of: Low / Moderate / High / Critical - followed by a one-sentence justification.
 
 Recommendations:
-- List each recommended action or next step as a separate bullet point.
+List each recommended action using EXACTLY ONE of these formats:
+
+[URGENT] - ACTION for immediate implementation within 24 hours
+[HIGH] - ACTION for implementation within 1 week
+[STANDARD] - ACTION for routine follow-up or monitoring
+
+IMPORTANT FORMATTING RULES for Recommendations:
+- START each line with ONLY ONE priority tag: [URGENT], [HIGH], or [STANDARD]
+- After the tag, put a dash and space, then the action text
+- DO NOT mix priority tags (e.g., do NOT write "STANDARD — [URGENT]")
+- DO NOT use any other labels or prefixes
+- Each recommendation on a separate line
+- Be specific and include timelines where applicable
 
 Rules:
 - Use plain text only. No markdown, no asterisks, no extra commentary.
-- Do NOT skip any section.
+- DO NOT skip any section.
+- Recommendations should be comprehensive, specific, and directly tied to the identified findings.
 
 Patient Report:
 {input_text}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { extractRiskLevel } from '../utils/parseAnalysis';
+import { extractRiskLevel, formatRecommendations } from '../utils/parseAnalysis';
 import {
   copyToClipboard,
   buildReportText,
@@ -160,6 +160,68 @@ function AnalysisSection({
         description: 'Suggested next steps based on the report analysis.',
         text: formatSectionText(safeSections.Recommendations),
         tone: sectionTones.recommendations,
+        render: (text) => {
+          const recommendations = formatRecommendations(text);
+          if (!recommendations.length) return <p style={styles.contentText}>{text}</p>;
+
+          // Group by priority
+          const urgent = recommendations.filter((r) => r.priority === 'urgent');
+          const high = recommendations.filter((r) => r.priority === 'high');
+          const standard = recommendations.filter((r) => r.priority === 'standard');
+
+          const renderGroup = (items, groupPriority) => {
+            if (!items.length) return null;
+
+            const colorMap = {
+              urgent: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b' },
+              high: { bg: '#fff7ed', border: '#f97316', text: '#92400e' },
+              standard: { bg: '#f0fdf4', border: '#10b981', text: '#065f46' },
+            };
+            const colors = colorMap[groupPriority];
+
+            return (
+              <div key={groupPriority} style={{ marginBottom: '16px' }}>
+                {items.map((rec, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      padding: '12px',
+                      marginBottom: '8px',
+                      backgroundColor: colors.bg,
+                      borderLeft: `4px solid ${colors.border}`,
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      color: colors.text,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        minWidth: '90px',
+                        paddingTop: '2px',
+                      }}
+                    >
+                      {rec.displayPriority}
+                    </span>
+                    <span style={{ flex: 1 }}>{rec.content}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          };
+
+          return (
+            <div>
+              {renderGroup(urgent, 'urgent')}
+              {renderGroup(high, 'high')}
+              {renderGroup(standard, 'standard')}
+            </div>
+          );
+        },
       },
       {
         key: 'tool',

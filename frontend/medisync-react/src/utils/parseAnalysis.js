@@ -111,3 +111,57 @@ export function extractRiskLevel(text) {
 
   return 'Unknown';
 }
+
+/**
+ * Format recommendations with priority highlighting
+ * Parses [URGENT], [HIGH], [STANDARD] tags ANYWHERE in text and returns structured data
+ * Extracts the HIGHEST priority from multiple tags in one line
+ *
+ * @param {string} text - Raw recommendations text
+ * @returns {Array} Array of formatted recommendation objects
+ */
+export function formatRecommendations(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  const lines = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  return lines.map((line) => {
+    let priority = 'standard';
+    let content = line;
+
+    // Find ALL priority tags anywhere in the line
+    const urgentMatches = line.match(/\[URGENT\]/gi);
+    const highMatches = line.match(/\[HIGH\]/gi);
+    const standardMatches = line.match(/\[STANDARD\]/gi);
+
+    // Determine HIGHEST priority (URGENT > HIGH > STANDARD)
+    if (urgentMatches && urgentMatches.length > 0) {
+      priority = 'urgent';
+    } else if (highMatches && highMatches.length > 0) {
+      priority = 'high';
+    } else {
+      priority = 'standard';
+    }
+
+    // Remove ALL priority tags from content
+    content = content
+      .replace(/\[URGENT\]/gi, '')
+      .replace(/\[HIGH\]/gi, '')
+      .replace(/\[STANDARD\]/gi, '')
+      .replace(/^STANDARD\s*—\s*/i, '') // Remove "STANDARD — " prefix if present
+      .replace(/^HIGH\s*—\s*/i, '')
+      .replace(/^URGENT\s*—\s*/i, '')
+      .replace(/^\s*[-*]\s+/, '') // Remove bullet points
+      .replace(/\s+—\s+/g, ' — ') // Normalize dashes with spacing
+      .trim();
+
+    return {
+      priority,
+      content,
+      displayPriority: priority === 'urgent' ? '🔴 URGENT' : priority === 'high' ? '🟠 HIGH' : '🟢 STANDARD',
+    };
+  });
+}

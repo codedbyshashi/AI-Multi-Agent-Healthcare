@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { analyzeReport } from '../services/api';
+import { analyzeReport, analyzeReportStream } from '../services/api';
 import { parseAnalysis, extractRiskLevel } from '../utils/parseAnalysis';
 import { saveAnalysisHistory } from '../utils/historyStorage';
 import PipelineVisualizer from '../components/PipelineVisualizer';
@@ -125,43 +125,67 @@ function Dashboard() {
     setPipeline({
       activeStep: 1,
       status: 'running',
-      message: 'API call started. Waiting for backend response.',
+      message: 'API call started. Receiving live agent updates.',
     });
 
+    const createdAt = new Date().toISOString();
+    let finalData = null;
+
     try {
-      const response = await analyzeReport(file);
-      const data = response?.data || {};
-      const selectedTool = data.selected_tool || 'unknown';
-      const workflowPlan = data.workflow_plan || '';
-      const analysisText = data.analysis || '';
-      const validation = data.validation || null;
-      const createdAt = new Date().toISOString();
-      const parsed = parseAnalysis(analysisText);
+      await analyzeReportStream(file, (data) => {
+        // Handle each streaming update
+        if (data.error) {
+          setError(`Stream error: ${data.error}`);
+          return;
+        }
 
-      const nextResult = {
-        workflowPlan,
-        selectedTool,
-        analysis: analysisText,
-        validation,
-        pipelineStatus: data.pipeline_status || null,
-        createdAt,
-      };
+        // Update pipeline status as each agent completes
+        if (data.pipeline_status) {
+          setPipelineResponse(prev => ({
+            ...prev,
+            ...data,
+            pipeline_status: data.pipeline_status,
+          }));
+        }
 
-      setResult(nextResult);
-      setParsedSections(parsed);
-      setPipelineResponse({ ...data });
-
-      saveAnalysisHistory({
-        id: `${Date.now()}`,
-        fileName: file.name,
-        fileSize: file.size,
-        createdAt,
-        selectedTool,
-        workflowPlan,
-        analysis: analysisText,
-        riskLevel: extractRiskLevel(analysisText),
-        parseFailed: parsed.parseFailed,
+        // If this is the final response with full data
+        if (data.done) {
+          finalData = data;
+        }
       });
+
+      // Process final data
+      if (finalData) {
+        const selectedTool = finalData.selected_tool || 'unknown';
+        const workflowPlan = finalData.workflow_plan || '';
+        const analysisText = finalData.analysis || '';
+        const validation = finalData.validation || null;
+        const parsed = parseAnalysis(analysisText);
+
+        const nextResult = {
+          workflowPlan,
+          selectedTool,
+          analysis: analysisText,
+          validation,
+          pipelineStatus: finalData.pipeline_status || null,
+          createdAt,
+        };
+
+        setResult(nextResult);
+        setParsedSections(parsed);
+
+        saveAnalysisHistory({
+          id: `${Date.now()}`,
+          fileName: file.name,
+          fileSize: file.size,
+          createdAt,
+          selectedTool,
+          workflowPlan,
+          analysis: analysisText,
+          riskLevel: extractRiskLevel(analysisText),
+          parseFailed: parsed.parseFailed,
+        });
+      }
     } catch (err) {
       setPipeline({
         activeStep: 1,
@@ -169,13 +193,12 @@ function Dashboard() {
         message: 'Analysis failed while waiting for backend response.',
       });
 
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+      if (err.message?.includes('timeout')) {
         setError('Analysis timed out. The document may be too large.');
-      } else if (!err.response) {
+      } else if (err.message?.includes('Cannot reach')) {
         setError('Cannot reach the backend server. Ensure FastAPI is running on port 8001.');
       } else {
-        const serverMsg = err.response?.data?.error || err.message;
-        setError(`Server error: ${serverMsg}`);
+        setError(`Error: ${err.message}`);
       }
     } finally {
       setLoading(false);
